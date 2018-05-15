@@ -22,7 +22,8 @@ Many of my styles have been from the many pair programming sessions [Ward Bell](
 ## See the Styles in a Sample App
 While this guide explains the *what*, *why* and *how*, I find it helpful to see them in practice. This guide is accompanied by a sample application that follows these styles and patterns. You can find the [sample application (named modular) here](https://github.com/johnpapa/ng-demos) in the `modular` folder. Feel free to grab it, clone it, or fork it. [Instructions on running it are in its readme](https://github.com/johnpapa/ng-demos/tree/master/modular).
 
-##Translations
+## Translations
+
 [Translations of this Angular style guide](https://github.com/johnpapa/angular-styleguide/tree/master/a1/i18n) are maintained by the community and can be found here.
 
 ## Table of Contents
@@ -488,7 +489,7 @@ While this guide explains the *what*, *why* and *how*, I find it helpful to see 
   }
   ```
 
-    ![Controller Using "Above the Fold"](https://raw.githubusercontent.com/johnpapa/angular-styleguide/master/a1/assets/above-the-fold-1.png)
+![Controller Using "Above the Fold"](https://raw.githubusercontent.com/johnpapa/angular-styleguide/master/a1/assets/above-the-fold-1.png)
 
   Note: If the function is a 1 liner consider keeping it right up top, as long as readability is not affected.
 
@@ -833,7 +834,7 @@ While this guide explains the *what*, *why* and *how*, I find it helpful to see 
 
   This way bindings are mirrored across the host object, primitive values cannot update alone using the revealing module pattern.
 
-    ![Factories Using "Above the Fold"](https://raw.githubusercontent.com/johnpapa/angular-styleguide/master/a1/assets/above-the-fold-2.png)
+![Factories Using "Above the Fold"](https://raw.githubusercontent.com/johnpapa/angular-styleguide/master/a1/assets/above-the-fold-2.png)
 
 ### Function Declarations to Hide Implementation Details
 ###### [Style [Y053](#style-y053)]
@@ -979,7 +980,7 @@ While this guide explains the *what*, *why* and *how*, I find it helpful to see 
   }
   ```
 
-    Note: The data service is called from consumers, such as a controller, hiding the implementation from the consumers, as shown below.
+Note: The data service is called from consumers, such as a controller, hiding the implementation from the consumers, as shown below.
 
   ```javascript
   /* recommended */
@@ -1152,7 +1153,7 @@ While this guide explains the *what*, *why* and *how*, I find it helpful to see 
   }
   ```
 
-    Note: There are many naming options for directives, especially since they can be used in narrow or wide scopes. Choose one that makes the directive and its file name distinct and clear. Some examples are below, but see the [Naming](#naming) section for more recommendations.
+Note: There are many naming options for directives, especially since they can be used in narrow or wide scopes. Choose one that makes the directive and its file name distinct and clear. Some examples are below, but see the [Naming](#naming) section for more recommendations.
 
 ### Manipulate DOM in a Directive
 ###### [Style [Y072](#style-y072)]
@@ -1235,7 +1236,7 @@ While this guide explains the *what*, *why* and *how*, I find it helpful to see 
 ### Directives and ControllerAs
 ###### [Style [Y075](#style-y075)]
 
-  - Use `controller as` syntax with a directive to be consistent with using `controller as` with view and controller pairings.
+  - Use `controllerAs` syntax with a directive to be consistent with using `controller as` with view and controller pairings.
 
     *Why?*: It makes sense and it's not difficult.
 
@@ -1244,6 +1245,8 @@ While this guide explains the *what*, *why* and *how*, I find it helpful to see 
     Note: Regarding dependency injection, see [Manually Identify Dependencies](#manual-annotating-for-dependency-injection).
 
     Note: Note that the directive's controller is outside the directive's closure. This style eliminates issues where the injection gets created as unreachable code after a `return`.
+    
+    Note: Lifecycle hooks were introduced in Angular 1.5. Initialization logic that relies on bindings being present should be put in the controller's $onInit() method, which is guarranteed to always be called after the bindings have been assigned.
 
   ```html
   <div my-example max="77"></div>
@@ -1284,13 +1287,23 @@ While this guide explains the *what*, *why* and *how*, I find it helpful to see 
   function ExampleController($scope) {
       // Injecting $scope just for comparison
       var vm = this;
-
       vm.min = 3;
-
+      vm.$onInit = onInit;
+      
+      //////////
+      
       console.log('CTRL: $scope.vm.min = %s', $scope.vm.min);
-      console.log('CTRL: $scope.vm.max = %s', $scope.vm.max);
+      console.log('CTRL: $scope.vm.max = %s', $scope.vm.max); // undefined in Angular 1.5+
       console.log('CTRL: vm.min = %s', vm.min);
-      console.log('CTRL: vm.max = %s', vm.max);
+      console.log('CTRL: vm.max = %s', vm.max); // undefined in Angular 1.5+
+      
+      // Angular 1.5+ does not bind attributes until calling $onInit();
+      function onInit() {
+          console.log('CTRL-onInit: $scope.vm.min = %s', $scope.vm.min);
+          console.log('CTRL-onInit: $scope.vm.max = %s', $scope.vm.max);
+          console.log('CTRL-onInit: vm.min = %s', vm.min);
+          console.log('CTRL-onInit: vm.max = %s', vm.max);
+      }
   }
   ```
 
@@ -1301,7 +1314,7 @@ While this guide explains the *what*, *why* and *how*, I find it helpful to see 
   <div>min={{vm.min}}<input ng-model="vm.min"/></div>
   ```
 
-    Note: You can also name the controller when you inject it into the link function and access directive attributes as properties of the controller.
+Note: You can also name the controller when you inject it into the link function and access directive attributes as properties of the controller.
 
   ```javascript
   // Alternative to above example
@@ -1348,8 +1361,12 @@ While this guide explains the *what*, *why* and *how*, I find it helpful to see 
   function ExampleController() {
       var vm = this;
       vm.min = 3;
-      console.log('CTRL: vm.min = %s', vm.min);
-      console.log('CTRL: vm.max = %s', vm.max);
+      vm.$onInit = onInit;
+      
+      function onInit() = {
+          console.log('CTRL: vm.min = %s', vm.min);
+          console.log('CTRL: vm.max = %s', vm.max);
+      }
   }
   ```
 
@@ -1472,7 +1489,7 @@ While this guide explains the *what*, *why* and *how*, I find it helpful to see 
   }
   ```
 
-    Note: The example below shows the route resolve points to a named function, which is easier to debug and easier to handle dependency injection.
+Note: The example below shows the route resolve points to a named function, which is easier to debug and easier to handle dependency injection.
 
   ```javascript
   /* even better */
@@ -1509,7 +1526,7 @@ While this guide explains the *what*, *why* and *how*, I find it helpful to see 
         vm.movies = moviesPrepService.movies;
   }
   ```
-    Note: The code example's dependency on `movieService` is not minification safe on its own. For details on how to make this code minification safe, see the sections on [dependency injection](#manual-annotating-for-dependency-injection) and on [minification and annotation](#minification-and-annotation).
+Note: The code example's dependency on `movieService` is not minification safe on its own. For details on how to make this code minification safe, see the sections on [dependency injection](#manual-annotating-for-dependency-injection) and on [minification and annotation](#minification-and-annotation).
 
 **[Back to top](#table-of-contents)**
 
@@ -1550,7 +1567,9 @@ While this guide explains the *what*, *why* and *how*, I find it helpful to see 
           // ***
       }
   }
+  ```
 
+  ```javascript
   /* recommended */
   function getCustomer(id) {
       return $http.get('/api/customer/' + id)
@@ -2133,7 +2152,7 @@ While this guide explains the *what*, *why* and *how*, I find it helpful to see 
 ### Directive Component Names
 ###### [Style [Y126](#style-y126)]
 
-  - Use consistent names for all directives using camel-case. Use a short prefix to describe the area that the directives belong (some example are company prefix or project prefix).
+  - Use consistent names for all directives using camelCase. Use a short prefix to describe the area that the directives belong (some example are company prefix or project prefix).
 
     *Why?*: Provides a consistent way to quickly identify and reference components.
 
@@ -2455,9 +2474,13 @@ While this guide explains the *what*, *why* and *how*, I find it helpful to see 
 ### Run Blocks
 ###### [Style [Y171](#style-y171)]
 
-  - Any code that needs to run when an application starts should be declared in a factory, exposed via a function, and injected into the [run block](https://docs.angularjs.org/guide/module#module-loading-dependencies).
+  - Any code that needs to run when an application starts should be declared in a factory, exposed via a function, and injected into the [run block](https://docs.angularjs.org/guide/module#module-loading-dependencies). 
+  
+  - Consider using manual bootstrapping techniques, as an alternative for logic that must run prior to running the Angular app.
 
     *Why?*: Code directly in a run block can be difficult to test. Placing in a factory makes it easier to abstract and mock.
+
+    *Why?*: Code directly in a run block can cause race conditions for startup logic, as it does not have a way to communicate when asynchronous code in the run block has completed.
 
   ```javascript
   angular
@@ -2552,7 +2575,7 @@ Unit testing helps maintain clean code, as such I included some of my recommenda
         var child;
         var excludeFiles = [];
         var fork = require('child_process').fork;
-        var karma = require('karma').server;
+        var Server = require('karma').Server;
         var serverSpecs = config.serverIntegrationSpecs;
 
         if (args.startServers) {
@@ -2567,11 +2590,14 @@ Unit testing helps maintain clean code, as such I included some of my recommenda
             }
         }
 
-        karma.start({
-            configFile: __dirname + '/karma.conf.js',
-            exclude: excludeFiles,
-            singleRun: !!singleRun
-        }, karmaCompleted);
+        var karmaOptions = {
+          configFile: __dirname + '/karma.conf.js',
+          exclude: excludeFiles,
+          singleRun: !!singleRun
+        };
+
+        let server = new Server(karmaOptions, karmaCompleted);
+        server.start();
 
         ////////////////
 
@@ -3122,6 +3148,27 @@ Use file templates or snippets to help follow consistent styles and patterns. He
     ngservice    // creates an Angular service
     ```
 
+### Emacs
+###### [Style [Y257](#style-y257)]
+
+  - [Emacs](https://www.gnu.org/software/emacs/) snippets that follow these styles and guidelines.
+
+    - Download the [Emacs Angular snippets](assets/emacs-angular-snippets?raw=true)
+
+      Note that yasnippet categorizes snippets by major mode, and there are several Emacs major modes for editing Javascript code. The snippets are in `js2-mode`, and the other directories contain only a dotfile to reference them there.
+
+    - install [yasnippet](https://github.com/capitaomorte/yasnippet) (`M-x package-install RET yasnippet RET`)
+    - copy snippets to snippet directory, or modify your Emacs init to add snippet directory to `yas-snippet-dirs`
+
+    ```javascript
+    ngcontroller // creates an Angular controller
+    ngdirective  // creates an Angular directive
+    ngfactory    // creates an Angular factory
+    ngmodule     // creates an Angular module
+    ngservice    // creates an Angular service
+    ngfilter     // creates an Angular filter
+    ```
+    
 **[Back to top](#table-of-contents)**
 
 ## Yeoman Generator
